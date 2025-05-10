@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十二长生</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Ma Shan Zheng', cursive, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #1a202c; /* 暗色背景 */
+            color: #e2e8f0; /* 浅色文字 */
+            line-height: 1.6;
+        }
+        .page {
+            display: none; /* 页面默认隐藏 */
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        .page.active {
+            display: flex; /* 显示活动页面 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .form-container {
+            background-color: #2d3748; /* 容器背景色，比body略浅 */
+            padding: 2rem;
+            border-radius: 0.5rem; /* 圆角 */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+        }
+        .form-container h2 {
+            font-size: 2.5rem; /* 标题字号 */
+            color: #f6e05e; /* 金色点缀 */
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-input {
+            background-color: #1a202c; /* 输入框背景 */
+            border: 1px solid #4a5568; /* 输入框边框 */
+            color: #e2e8f0; /* 输入框文字颜色 */
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-family: sans-serif; /* 输入框使用标准字体以提高可读性 */
+            box-sizing: border-box;
+        }
+        .form-input::placeholder {
+            color: #718096; /* 占位符颜色 */
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: #f6e05e; /* 金色按钮 */
+            color: #1a202c;
+        }
+        .btn-primary:hover {
+            background-color: #f6d02e; /* 金色按钮悬停 */
+        }
+        .btn-secondary {
+            background-color: #4FD1C5; /* 青色按钮 */
+            color: #1a202c;
+        }
+        .btn-secondary:hover {
+            background-color: #38B2AC; /* 青色按钮悬停 */
+        }
+        .btn-danger {
+            background-color: #e53e3e; /* 红色按钮 (用于危险操作) */
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+        .link {
+            color: #63b3ed; /* 链接颜色 */
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .link:hover {
+            color: #4299e1;
+        }
+        .info-box {
+            background-color: #2d3748;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #f6e05e; /* 金色左边框 */
+        }
+        .info-box p {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .info-box p strong {
+            color: #f6e05e;
+        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f6e05e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f6d02e;
+        }
+        /* 管理员表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-family: sans-serif; /* 表格使用标准字体 */
+        }
+        th, td {
+            border: 1px solid #4a5568;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #4a5568;
+            color: #f6e05e;
+        }
+        td button {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem;
+            margin-right: 0.25rem;
+        }
+        /* 消息提示框 */
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4FD1C5; /* 青色背景 */
+            color: #1a202c; /* 深色文字 */
+            padding: 1rem 2rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+            font-size: 1rem;
+            font-family: sans-serif; /* 提示框使用标准字体 */
+        }
+        #messageBox.error {
+            background-color: #e53e3e; /* 错误提示用红色背景 */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="messageBox"></div>
+
+        <div id="loginPage" class="page active">
+            <div class="form-container">
+                <h2>十二长生 - 登录</h2>
+                <input type="text" id="loginUsername" class="form-input" placeholder="用户名">
+                <input type="password" id="loginPassword" class="form-input" placeholder="密码">
+                <button id="loginButton" class="btn btn-primary">登录</button>
+                <p class="mt-4 text-center">
+                    <span class="link" onclick="window.navigateTo('registerPage')">没有账户？点击注册</span>
+                </p>
+                <p class="mt-2 text-center">
+                    <span class="link" onclick="window.navigateTo('forgotPasswordPage')">忘记密码？</span>
+                </p>
+            </div>
+        </div>
+
+        <div id="registerPage" class="page">
+            <div class="form-container">
+                <h2>注册新用户</h2>
+                <input type="text" id="registerUsername" class="form-input" placeholder="用户名 (唯一)">
+                <input type="password" id="registerPassword" class="form-input" placeholder="密码">
+                <input type="password" id="registerConfirmPassword" class="form-input" placeholder="确认密码">
+                <input type="text" id="registerSecurityQuestion" class="form-input" placeholder="密保问题 (例如：我的宠物叫什么？)">
+                <input type="text" id="registerSecurityAnswer" class="form-input" placeholder="密保答案">
+                <button id="registerButton" class="btn btn-primary">注册</button>
+                <p class="mt-4 text-center">
+                    <span class="link" onclick="window.navigateTo('loginPage')">已有账户？返回登录</span>
+                </p>
+            </div>
+        </div>
+
+        <div id="forgotPasswordPage" class="page">
+            <div class="form-container">
+                <h2>找回密码</h2>
+                <div id="forgotPasswordStep1">
+                    <input type="text" id="forgotUsername" class="form-input" placeholder="请输入您的用户名">
+                    <button id="findUserButton" class="btn btn-primary">查找用户</button>
+                </div>
+                <div id="forgotPasswordStep2" style="display:none;">
+                    <p id="displaySecurityQuestion" class="mb-2 text-gray-300"></p>
+                    <input type="text" id="forgotSecurityAnswer" class="form-input" placeholder="请输入密保答案">
+                    <input type="password" id="forgotNewPassword" class="form-input" placeholder="请输入新密码">
+                    <input type="password" id="forgotConfirmNewPassword" class="form-input" placeholder="确认新密码">
+                    <button id="resetPasswordButton" class="btn btn-primary">重置密码</button>
+                </div>
+                <p class="mt-4 text-center">
+                    <span class="link" onclick="window.navigateTo('loginPage')">返回登录</span>
+                </p>
+            </div>
+        </div>
+
+        <div id="userHomePage" class="page">
+            <div class="form-container text-center">
+                <h2 id="welcomeMessage">欢迎回来！</h2>
+                <button onclick="window.navigateTo('userProfilePage')" class="btn btn-primary my-2">个人信息</button>
+                <button onclick="window.navigateTo('drawingLotsPage')" class="btn btn-secondary my-2">前往抽签</button>
+                <button id="logoutButtonUser" class="btn btn-danger my-2">退出登录</button>
+            </div>
+        </div>
+
+        <div id="userProfilePage" class="page">
+            <div class="form-container">
+                <h2>个人主页</h2>
+                <div class="info-box">
+                    <p><strong>用户名:</strong> <span id="profileUsername"></span></p>
+                    <p><strong>注册时间:</strong> <span id="profileRegistrationTime"></span></p>
+                    <p><strong>账户余额:</strong> <span id="profileBalance"></span> 元</p>
+                </div>
+                <button onclick="window.navigateTo('userHomePage')" class="btn btn-primary">返回主页</button>
+            </div>
+        </div>
+
+        <div id="drawingLotsPage" class="page">
+            <div class="form-container text-center">
+                <h2>抽签界面</h2>
+                <p class="my-4 text-xl text-gray-300">此功能正在快马加鞭开发中，敬请期待！</p>
+                <img src="https://placehold.co/300x200/2d3748/f6e05e?text=施工中..." alt="[图片：施工中]" class="mx-auto my-4 rounded">
+                <button onclick="window.navigateTo('userHomePage')" class="btn btn-primary">返回主页</button>
+            </div>
+        </div>
+
+        <div id="adminDashboardPage" class="page">
+            <div class="w-full max-w-4xl">
+                <div class="form-container w-full text-center mb-8">
+                     <h2>管理员仪表盘</h2>
+                     <button id="logoutButtonAdmin" class="btn btn-danger mt-0 mb-4 w-auto inline-block">退出登录</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="info-box">
+                        <p><strong>总用户数:</strong> <span id="adminTotalUsers">0</span></p>
+                    </div>
+                    <div class="info-box">
+                        <p><strong>当前用户总余额:</strong> <span id="adminTotalBalance">0.00</span> 元</p>
+                    </div>
+                    <div class="info-box">
+                        <p><strong>近三日网站访问总人数:</strong> <span id="adminRecentVisits">0</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl text-yellow-400 mb-4">管理用户</h3>
+                    <div class="overflow-x-auto">
+                        <table id="adminUserTable" class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>余额 (元)</th>
+                                    <th>注册时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 配置信息 ---
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSWORD = "adminpassword"; // 真实应用中，请勿硬编码密码
+
+        // --- 全局变量 ---
+        let userForPasswordReset = null; // 用于存储忘记密码流程中的用户信息
+
+        // --- 工具函数 ---
+        function showMessage(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            if (!messageBox) {
+                console.error("Message box element not found!");
+                return;
+            }
+            messageBox.textContent = message;
+            messageBox.className = type === 'error' ? 'error' : '';
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        function _navigateToPage(pageId) { // 内部导航函数
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                 console.log(`Navigated to ${pageId}`);
+            } else {
+                console.error(`Navigation error: Page with id "${pageId}" not found.`);
+                showMessage(`导航错误: 页面 "${pageId}" 未找到。`, 'error');
+                // Optionally navigate to a default page like loginPage if target is not found
+                // document.getElementById('loginPage').classList.add('active');
+                return;
+            }
+
+            // 记录访问 (简单版)
+            if (pageId !== 'loginPage' && pageId !== 'registerPage' && pageId !== 'forgotPasswordPage') {
+                recordVisit();
+            }
+        }
+
+        window.navigateTo = function(pageId) { // 暴露给HTML onclick的导航函数
+            _navigateToPage(pageId);
+
+            // 根据导航到的页面执行特定操作
+            if (pageId === 'userProfilePage') {
+                loadUserProfilePage();
+            } else if (pageId === 'adminDashboardPage') {
+                loadAdminDashboard();
+            } else if (pageId === 'forgotPasswordPage') {
+                // 重置忘记密码表单状态
+                document.getElementById('forgotPasswordStep1').style.display = 'block';
+                document.getElementById('forgotPasswordStep2').style.display = 'none';
+                document.getElementById('forgotUsername').value = '';
+                const secAnswerEl = document.getElementById('forgotSecurityAnswer');
+                if(secAnswerEl) secAnswerEl.value = '';
+                const newPassEl = document.getElementById('forgotNewPassword');
+                if(newPassEl) newPassEl.value = '';
+                const confirmNewPassEl = document.getElementById('forgotConfirmNewPassword');
+                if(confirmNewPassEl) confirmNewPassEl.value = '';
+                userForPasswordReset = null; // 清除已存储的用户信息
+            }
+        }
+
+        function getUsers() {
+            // 真实应用中，密码应哈希存储，绝不应明文存储。
+            // 此处为简化示例。
+            const usersRaw = localStorage.getItem('users_shierchangsheng');
+            if (usersRaw) {
+                try {
+                    return JSON.parse(usersRaw);
+                } catch (e) {
+                    console.error("Error parsing users from localStorage:", e);
+                    return []; // 解析失败则返回空数组
+                }
+            }
+            return [];
+        }
+
+        function saveUsers(users) {
+            try {
+                localStorage.setItem('users_shierchangsheng', JSON.stringify(users));
+            } catch (e) {
+                console.error("Error saving users to localStorage:", e);
+                showMessage("存储用户信息时发生错误。", "error");
+            }
+        }
+
+        function getLoggedInUser() {
+            return localStorage.getItem('loggedInUser_shierchangsheng');
+        }
+
+        function setLoggedInUser(username) {
+            if (username) {
+                localStorage.setItem('loggedInUser_shierchangsheng', username);
+            } else {
+                localStorage.removeItem('loggedInUser_shierchangsheng');
+            }
+        }
+
+        function recordVisit() {
+            let siteActivity = { visits: [] };
+            const activityRaw = localStorage.getItem('siteActivity_shierchangsheng');
+            if (activityRaw) {
+                try {
+                    siteActivity = JSON.parse(activityRaw);
+                    if (!Array.isArray(siteActivity.visits)) { // 确保visits是数组
+                        siteActivity.visits = [];
+                    }
+                } catch (e) {
+                    console.error("Error parsing site activity:", e);
+                    siteActivity.visits = []; // 解析失败则重置
+                }
+            }
+            siteActivity.visits.push(new Date().toISOString());
+            // 可以考虑限制visits数组的长度，防止localStorage过大
+            // siteActivity.visits = siteActivity.visits.slice(-1000); // 例如，只保留最近1000条
+            try {
+                localStorage.setItem('siteActivity_shierchangsheng', JSON.stringify(siteActivity));
+            } catch (e) {
+                console.error("Error saving site activity:", e);
+            }
+        }
+
+
+        // --- 初始化逻辑 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM fully loaded and parsed");
+
+            // 检查管理员账户是否存在，不存在则创建 (首次运行时)
+            let users = getUsers();
+            if (!users.find(u => u.username === ADMIN_USERNAME)) {
+                users.push({
+                    username: ADMIN_USERNAME,
+                    password: ADMIN_PASSWORD, // 明文密码，仅供演示
+                    securityQuestion: "Admin's secret?",
+                    securityAnswer: "secret",
+                    registrationTime: new Date().toISOString(),
+                    balance: 0,
+                    isAdmin: true,
+                    isDisabled: false
+                });
+                saveUsers(users);
+                console.log("Admin user created.");
+            }
+            
+            const loggedInUser = getLoggedInUser();
+            if (loggedInUser) {
+                console.log("Logged in user found:", loggedInUser);
+                if (loggedInUser === ADMIN_USERNAME) {
+                    window.navigateTo('adminDashboardPage');
+                } else {
+                    window.navigateTo('userHomePage');
+                    loadUserHomePage(); // 确保用户主页信息加载
+                }
+            } else {
+                console.log("No logged in user found, navigating to login page.");
+                window.navigateTo('loginPage');
+            }
+
+            // --- 事件监听器 ---
+            // 登录
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', () => {
+                    const username = document.getElementById('loginUsername').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (!username || !password) {
+                        showMessage("请输入用户名和密码。", 'error');
+                        return;
+                    }
+                    console.log(`Login attempt: user='${username}'`);
+
+                    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                        setLoggedInUser(ADMIN_USERNAME);
+                        window.navigateTo('adminDashboardPage');
+                        showMessage("管理员登录成功！");
+                        return;
+                    }
+
+                    const currentUsers = getUsers();
+                    const user = currentUsers.find(u => u.username === username && u.password === password);
+
+                    if (user) {
+                        if (user.isDisabled) {
+                            showMessage("您的账户已被禁用，请联系管理员。", 'error');
+                            return;
+                        }
+                        setLoggedInUser(user.username);
+                        window.navigateTo('userHomePage');
+                        loadUserHomePage(); // 加载用户主页信息
+                        showMessage("登录成功！");
+                    } else {
+                        showMessage("用户名或密码错误。", 'error');
+                    }
+                });
+            } else {
+                console.error("Login button not found!");
+            }
+
+
+            // 注册
+            const registerButton = document.getElementById('registerButton');
+            if (registerButton) {
+                registerButton.addEventListener('click', () => {
+                    const username = document.getElementById('registerUsername').value.trim();
+                    const password = document.getElementById('registerPassword').value;
+                    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                    const securityQuestion = document.getElementById('registerSecurityQuestion').value.trim();
+                    const securityAnswer = document.getElementById('registerSecurityAnswer').value.trim();
+
+                    if (!username || !password || !confirmPassword || !securityQuestion || !securityAnswer) {
+                        showMessage("所有字段均为必填项。", 'error');
+                        return;
+                    }
+                    if (password !== confirmPassword) {
+                        showMessage("两次输入的密码不一致。", 'error');
+                        return;
+                    }
+                    if (username === ADMIN_USERNAME) {
+                        showMessage("不能使用此用户名进行注册。", 'error');
+                        return;
+                    }
+
+                    let currentUsers = getUsers();
+                    if (currentUsers.find(u => u.username === username)) {
+                        showMessage("用户名已存在。", 'error');
+                        return;
+                    }
+
+                    currentUsers.push({
+                        username,
+                        password, // 明文密码，仅供演示。真实应用中应哈希处理！
+                        securityQuestion,
+                        securityAnswer,
+                        registrationTime: new Date().toISOString(),
+                        balance: 0, // 初始余额
+                        isDisabled: false
+                    });
+                    saveUsers(currentUsers);
+                    showMessage("注册成功！请登录。");
+                    window.navigateTo('loginPage');
+                    // 清空注册表单
+                    document.getElementById('registerUsername').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    document.getElementById('registerConfirmPassword').value = '';
+                    document.getElementById('registerSecurityQuestion').value = '';
+                    document.getElementById('registerSecurityAnswer').value = '';
+                });
+            } else {
+                console.error("Register button not found!");
+            }
+            
+            // 忘记密码 - 步骤1: 查找用户
+            const findUserButton = document.getElementById('findUserButton');
+            if (findUserButton) {
+                findUserButton.addEventListener('click', () => {
+                    const username = document.getElementById('forgotUsername').value.trim();
+                    if (!username) {
+                        showMessage("请输入用户名。", 'error');
+                        return;
+                    }
+                    const currentUsers = getUsers();
+                    userForPasswordReset = currentUsers.find(u => u.username === username); // 赋值给全局变量
+
+                    if (userForPasswordReset) {
+                        if (userForPasswordReset.username === ADMIN_USERNAME) {
+                            showMessage("管理员密码无法通过此方式重置。", 'error');
+                            userForPasswordReset = null; // 清除
+                            return;
+                        }
+                        document.getElementById('displaySecurityQuestion').textContent = `密保问题: ${userForPasswordReset.securityQuestion}`;
+                        document.getElementById('forgotPasswordStep1').style.display = 'none';
+                        document.getElementById('forgotPasswordStep2').style.display = 'block';
+                    } else {
+                        showMessage("未找到该用户。", 'error');
+                    }
+                });
+            } else {
+                console.error("Find user button not found!");
+            }
+
+
+            // 忘记密码 - 步骤2: 重置密码
+            const resetPasswordButton = document.getElementById('resetPasswordButton');
+            if(resetPasswordButton) {
+                resetPasswordButton.addEventListener('click', () => {
+                    if (!userForPasswordReset) { // 检查 userForPasswordReset 是否有效
+                        showMessage("发生错误，请返回上一步重试。", 'error');
+                        window.navigateTo('forgotPasswordPage'); // 重置流程
+                        return;
+                    }
+
+                    const answer = document.getElementById('forgotSecurityAnswer').value.trim();
+                    const newPassword = document.getElementById('forgotNewPassword').value;
+                    const confirmNewPassword = document.getElementById('forgotConfirmNewPassword').value;
+
+                    if (!answer || !newPassword || !confirmNewPassword) {
+                        showMessage("所有字段均为必填项。", 'error');
+                        return;
+                    }
+                    if (newPassword !== confirmNewPassword) {
+                        showMessage("两次输入的新密码不一致。", 'error');
+                        return;
+                    }
+                    
+                    // 答案比较时不区分大小写
+                    if (userForPasswordReset.securityAnswer.toLowerCase() === answer.toLowerCase()) {
+                        let currentUsers = getUsers();
+                        const userIndex = currentUsers.findIndex(u => u.username === userForPasswordReset.username);
+                        if (userIndex > -1) {
+                            currentUsers[userIndex].password = newPassword; // 更新密码
+                            saveUsers(currentUsers);
+                            showMessage("密码重置成功！请使用新密码登录。");
+                            window.navigateTo('loginPage');
+                            // 清理忘记密码表单和状态
+                            document.getElementById('forgotUsername').value = '';
+                            document.getElementById('forgotSecurityAnswer').value = '';
+                            document.getElementById('forgotNewPassword').value = '';
+                            document.getElementById('forgotConfirmNewPassword').value = '';
+                            document.getElementById('forgotPasswordStep1').style.display = 'block';
+                            document.getElementById('forgotPasswordStep2').style.display = 'none';
+                            userForPasswordReset = null; // 清除已存储的用户信息
+                        } else {
+                            showMessage("更新密码时出错，未找到用户索引。", 'error'); // 理论上不应发生
+                        }
+                    } else {
+                        showMessage("密保答案错误。", 'error');
+                    }
+                });
+            } else {
+                console.error("Reset password button not found!");
+            }
+
+
+            // 退出登录按钮
+            const logoutUserBtn = document.getElementById('logoutButtonUser');
+            if (logoutUserBtn) logoutUserBtn.addEventListener('click', logout);
+            const logoutAdminBtn = document.getElementById('logoutButtonAdmin');
+            if (logoutAdminBtn) logoutAdminBtn.addEventListener('click', logout);
+        });
+
+        function logout() {
+            console.log("Logging out user:", getLoggedInUser());
+            setLoggedInUser(null);
+            window.navigateTo('loginPage');
+            showMessage("已成功退出登录。");
+            // 清理登录表单敏感字段
+            const loginUserEl = document.getElementById('loginUsername');
+            if(loginUserEl) loginUserEl.value = '';
+            const loginPassEl = document.getElementById('loginPassword');
+            if(loginPassEl) loginPassEl.value = '';
+        }
+
+        // --- 页面加载函数 ---
+        function loadUserHomePage() {
+            const username = getLoggedInUser();
+            if (!username || username === ADMIN_USERNAME) { // 如果不是普通用户或未登录
+                if (username === ADMIN_USERNAME) logout(); // 管理员不应访问此页，强制登出
+                else window.navigateTo('loginPage');
+                return;
+            }
+            const welcomeMsgEl = document.getElementById('welcomeMessage');
+            if(welcomeMsgEl) welcomeMsgEl.textContent = `欢迎回来，${username}！`;
+            console.log("User home page loaded for:", username);
+        }
+
+        function loadUserProfilePage() {
+            const username = getLoggedInUser();
+            if (!username || username === ADMIN_USERNAME) {
+                if (username === ADMIN_USERNAME) logout();
+                else window.navigateTo('loginPage');
+                return;
+            }
+
+            const currentUsers = getUsers();
+            const user = currentUsers.find(u => u.username === username);
+            if (user) {
+                document.getElementById('profileUsername').textContent = user.username;
+                document.getElementById('profileRegistrationTime').textContent = new Date(user.registrationTime).toLocaleString('zh-CN');
+                document.getElementById('profileBalance').textContent = (typeof user.balance === 'number' ? user.balance : 0).toFixed(2);
+                console.log("User profile loaded for:", username);
+            } else {
+                showMessage("无法加载用户信息，可能数据已损坏。", 'error');
+                console.error("User data not found for profile page:", username);
+                logout(); // 用户数据不一致，强制登出
+            }
+        }
+        
+        // --- 管理员功能函数 ---
+        function loadAdminDashboard() {
+            const loggedInUser = getLoggedInUser();
+            if (loggedInUser !== ADMIN_USERNAME) {
+                showMessage("无权访问管理员页面。", 'error');
+                window.navigateTo('loginPage'); // 非管理员重定向到登录页
+                return;
+            }
+            console.log("Loading admin dashboard...");
+
+            const allUsers = getUsers();
+            const usersToDisplay = allUsers.filter(u => u.username !== ADMIN_USERNAME); // 排除管理员自身
+
+            // 更新统计数据
+            document.getElementById('adminTotalUsers').textContent = usersToDisplay.length;
+            const totalBalance = usersToDisplay.reduce((sum, user) => sum + (parseFloat(user.balance) || 0), 0);
+            document.getElementById('adminTotalBalance').textContent = totalBalance.toFixed(2);
+
+            const siteActivityRaw = localStorage.getItem('siteActivity_shierchangsheng');
+            let siteActivity = { visits: [] };
+            if (siteActivityRaw) {
+                try {
+                    siteActivity = JSON.parse(siteActivityRaw);
+                    if(!Array.isArray(siteActivity.visits)) siteActivity.visits = [];
+                } catch (e) { siteActivity.visits = []; }
+            }
+            
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+            const recentVisitsCount = siteActivity.visits.filter(visitTime => new Date(visitTime) >= threeDaysAgo).length;
+            document.getElementById('adminRecentVisits').textContent = recentVisitsCount;
+
+            // 填充用户表格
+            const tableBody = document.getElementById('adminUserTable')?.getElementsByTagName('tbody')[0];
+            if (!tableBody) {
+                console.error("Admin user table body not found!");
+                return;
+            }
+            tableBody.innerHTML = ''; // 清空现有行
+
+            usersToDisplay.forEach(user => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = user.username;
+                row.insertCell().textContent = (parseFloat(user.balance) || 0).toFixed(2);
+                row.insertCell().textContent = new Date(user.registrationTime).toLocaleDateString('zh-CN');
+                
+                const statusCell = row.insertCell();
+                statusCell.textContent = user.isDisabled ? '已禁用' : '正常';
+                statusCell.style.color = user.isDisabled ? '#e53e3e' : '#38b2ac'; // 红色表示禁用，青色表示正常
+
+                const actionsCell = row.insertCell();
+                
+                const toggleDisableButton = document.createElement('button');
+                toggleDisableButton.textContent = user.isDisabled ? '启用账户' : '禁用账户';
+                toggleDisableButton.className = `btn ${user.isDisabled ? 'btn-secondary' : 'btn-danger'} text-xs`;
+                toggleDisableButton.onclick = () => window.toggleUserStatus(user.username);
+                actionsCell.appendChild(toggleDisableButton);
+
+                const editBalanceButton = document.createElement('button');
+                editBalanceButton.textContent = '修改余额';
+                editBalanceButton.className = 'btn btn-primary text-xs ml-1'; // ml-1 for a little margin
+                editBalanceButton.onclick = () => window.promptEditBalance(user.username);
+                actionsCell.appendChild(editBalanceButton);
+            });
+            console.log("Admin dashboard loaded with user table.");
+        }
+
+        window.toggleUserStatus = function(username) {
+            if (username === ADMIN_USERNAME) {
+                showMessage("不能禁用管理员账户。", "error");
+                return;
+            }
+            let currentUsers = getUsers();
+            const userIndex = currentUsers.findIndex(u => u.username === username);
+            if (userIndex > -1) {
+                currentUsers[userIndex].isDisabled = !currentUsers[userIndex].isDisabled;
+                saveUsers(currentUsers);
+                loadAdminDashboard(); // 刷新表格
+                showMessage(`用户 ${username} 已${currentUsers[userIndex].isDisabled ? '禁用' : '启用'}.`);
+                console.log(`User ${username} status toggled to: ${currentUsers[userIndex].isDisabled ? 'disabled' : 'enabled'}`);
+            } else {
+                showMessage(`错误：切换用户 ${username} 状态时未找到用户。`, 'error');
+            }
+        }
+
+        window.promptEditBalance = function(username) {
+            if (username === ADMIN_USERNAME) {
+                showMessage("不能修改管理员账户余额。", "error");
+                return;
+            }
+            console.log("Attempting to edit balance for user:", username);
+            const currentUsers = getUsers();
+            const currentUserData = currentUsers.find(u => u.username === username);
+
+            if (!currentUserData) {
+                showMessage(`错误：未找到用户 ${username} 的数据。`, 'error');
+                console.error("User data not found for balance edit:", username);
+                return;
+            }
+            
+            const currentBalance = (typeof currentUserData.balance === 'number' ? currentUserData.balance : 0);
+            console.log("Current balance for prompt:", currentBalance);
+
+            const newBalanceStr = prompt(`请输入用户 ${username} 的新余额:`, currentBalance.toFixed(2));
+
+            if (newBalanceStr !== null) { // 用户没有点击“取消”
+                const newBalance = parseFloat(newBalanceStr);
+                if (!isNaN(newBalance) && newBalance >= 0) {
+                    const userIndex = currentUsers.findIndex(u => u.username === username);
+                    // userIndex should be found if currentUserData was found, but check anyway
+                    if (userIndex > -1) {
+                        currentUsers[userIndex].balance = newBalance;
+                        saveUsers(currentUsers);
+                        loadAdminDashboard(); // 刷新表格
+                        showMessage(`用户 ${username} 的余额已更新为 ${newBalance.toFixed(2)} 元。`);
+                        console.log(`Balance for user ${username} updated to ${newBalance.toFixed(2)}`);
+                    } else {
+                        showMessage(`错误：更新用户 ${username} 余额时内部错误。`, 'error');
+                    }
+                } else {
+                    showMessage("输入的余额无效。请输入一个非负数字。", 'error');
+                }
+            }
+            // 如果 newBalanceStr 为 null (用户点击了取消)，则不执行任何操作
+        }
+
+    </script>
+</body>
+</html>
