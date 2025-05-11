@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十二长生 - 个人主页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="messageBox"></div>
+
+        <div id="userProfilePage" class="page active">
+            <div class="form-container">
+                <h2>个人主页</h2>
+                <div class="info-box">
+                    <p><strong>用户名:</strong> <span id="profileUsername"></span></p>
+                    <p><strong>注册时间:</strong> <span id="profileRegistrationTime"></span></p>
+                    <p><strong>账户余额:</strong> <span id="profileBalance"></span> 元</p>
+                </div>
+                <button onclick="navigateTo('userHome.html')" class="btn btn-primary">返回主页</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 加载用户个人信息页面
+            const username = localStorage.getItem('username');
+            if (!username) {
+                showMessage("登录状态已失效，请重新登录。", 'error');
+                navigateTo('index.html');
+                return;
+            }
+
+            fetch('/api/user-profile', {
+                headers: {
+                    'Authorization': username
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('profileUsername').textContent = data.user.username;
+                    document.getElementById('profileRegistrationTime').textContent = new Date(data.user.registrationTime).toLocaleString('zh-CN');
+                    document.getElementById('profileBalance').textContent = (data.user.balance).toFixed(2);
+                } else {
+                    showMessage(data.message, 'error');
+                    navigateTo('index.html');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading user profile page:', error);
+                showMessage("无法加载用户信息，请重新登录。", 'error');
+                navigateTo('index.html');
+            });
+        });
+    </script>
+</body>
+</html>

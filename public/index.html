@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十二长生 - 登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="messageBox"></div>
+
+        <div id="loginPage" class="page active">
+            <div class="form-container">
+                <h2>十二长生 - 登录</h2>
+                <input type="text" id="loginUsername" class="form-input" placeholder="用户名">
+                <input type="password" id="loginPassword" class="form-input" placeholder="密码">
+                <button id="loginButton" class="btn btn-primary">登录</button>
+                <p class="mt-4 text-center">
+                    <span class="link" onclick="navigateTo('register.html')">没有账户？点击注册</span>
+                </p>
+                <p class="mt-2 text-center">
+                    <span class="link" onclick="navigateTo('forgotPassword.html')">忘记密码？</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 登录按钮事件
+            document.getElementById('loginButton').addEventListener('click', () => {
+                const username = document.getElementById('loginUsername').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                
+
+                // 记录主页访问
+            fetch('/api/record-home-visit', {
+                method: 'GET'
+            })
+            
+                if (!username || !password) {
+                    showMessage("请输入用户名和密码。", 'error');
+                    return;
+                }
+
+                fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.isAdmin) {
+                            localStorage.setItem('adminUsername', username);
+                            window.location.href = 'adminDashboard.html';
+                        } else {
+                            localStorage.setItem('username', username);
+                            window.location.href = 'userHome.html';
+                        }
+                        showMessage("登录成功！");
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error logging in:', error);
+                    showMessage("登录失败，请稍后再试。", 'error');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

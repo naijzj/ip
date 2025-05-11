@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十二长生 - 用户主页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="messageBox"></div>
+
+        <div id="userHomePage" class="page active">
+            <div class="form-container text-center">
+                <h2 id="welcomeMessage">欢迎回来！</h2>
+                <button onclick="navigateTo('userProfile.html')" class="btn btn-primary my-2">个人信息</button>
+                <button onclick="navigateTo('drawingLots.html')" class="btn btn-secondary my-2">前往抽签</button>
+                <button id="logoutButtonUser" class="btn btn-danger my-2">退出登录</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 加载用户主页信息
+            const username = localStorage.getItem('username');
+            if (!username) {
+                showMessage("登录状态已失效，请重新登录。", 'error');
+                navigateTo('index.html');
+                return;
+            }
+
+            fetch('/api/user-profile', {
+                headers: {
+                    'Authorization': username
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('welcomeMessage').textContent = `欢迎回来，${data.user.username}！`;
+                } else {
+                    showMessage(data.message, 'error');
+                    navigateTo('index.html');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading user profile:', error);
+                showMessage("无法加载用户信息，请重新登录。", 'error');
+                navigateTo('index.html');
+            });
+
+            // 退出登录按钮事件
+            document.getElementById('logoutButtonUser').addEventListener('click', () => {
+                fetch('/api/logout', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.removeItem('username');
+                        navigateTo('index.html');
+                        showMessage("已成功退出登录。");
+                        // 清理登录表单敏感字段
+                        document.getElementById('loginUsername').value = '';
+                        document.getElementById('loginPassword').value = '';
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                    showMessage("退出登录失败，请稍后再试。", 'error');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

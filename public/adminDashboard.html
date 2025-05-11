@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十二长生 - 管理员仪表盘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="messageBox"></div>
+
+        <div id="adminDashboardPage" class="page active">
+            <div class="w-full max-w-4xl">
+                <div class="form-container w-full text-center mb-8">
+                     <h2>管理员仪表盘</h2>
+                     <button id="logoutButtonAdmin" class="btn btn-danger mt-0 mb-4 w-auto inline-block">退出登录</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="info-box">
+                        <p><strong>总用户数:</strong> <span id="adminTotalUsers">0</span></p>
+                    </div>
+                    <div class="info-box">
+                        <p><strong>当前用户总余额:</strong> <span id="adminTotalBalance">0.00</span> 元</p>
+                    </div>
+                    <div class="info-box">
+                        <p><strong>主页总访问人数:</strong> <span id="adminTotalHomeVisits">0</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl text-yellow-400 mb-4">管理用户</h3>
+                    <div class="overflow-x-auto">
+                        <table id="adminUserTable" class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>余额 (元)</th>
+                                    <th>注册时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 自动记录访问
+            fetch('/api/record-visit', {
+                method: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('adminUsername')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Error recording visit:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error recording visit:', error);
+            });
+
+            // 加载管理员仪表盘
+            fetch('/api/admin-dashboard', {
+                headers: {
+                    'Authorization': localStorage.getItem('adminUsername')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('adminTotalUsers').textContent = data.stats.totalUsers;
+                    document.getElementById('adminTotalBalance').textContent = data.stats.totalBalance.toFixed(2);
+                    document.getElementById('adminTotalHomeVisits').textContent = data.stats.totalHomeVisits;
+
+                    const tableBody = document.getElementById('adminUserTable').getElementsByTagName('tbody')[0];
+                    if (!tableBody) {
+                        console.error("Admin user table body not found!");
+                        return;
+                    }
+                    tableBody.innerHTML = ''; // 清空现有行
+
+                    data.users.forEach(user => {
+                        const row = tableBody.insertRow();
+                        row.insertCell().textContent = user.username;
+                        row.insertCell().textContent = (user.balance).toFixed(2);
+                        row.insertCell().textContent = new Date(user.registrationTime).toLocaleDateString('zh-CN');
+
+                        const statusCell = row.insertCell();
+                        statusCell.textContent = user.isDisabled ? '已禁用' : '正常';
+                        statusCell.style.color = user.isDisabled ? '#e53e3e' : '#38b2ac';
+
+                        const actionsCell = row.insertCell();
+
+                        const toggleDisableButton = document.createElement('button');
+                        toggleDisableButton.textContent = user.isDisabled ? '启用账户' : '禁用账户';
+                        toggleDisableButton.className = `btn ${user.isDisabled ? 'btn-secondary' : 'btn-danger'} text-xs`;
+                        toggleDisableButton.onclick = () => window.toggleUserStatus(user.username);
+                        actionsCell.appendChild(toggleDisableButton);
+
+                        const editBalanceButton = document.createElement('button');
+                        editBalanceButton.textContent = '修改余额';
+                        editBalanceButton.className = 'btn btn-primary text-xs ml-1';
+                        editBalanceButton.onclick = () => window.promptEditBalance(user.username);
+                        actionsCell.appendChild(editBalanceButton);
+                    });
+                } else {
+                    showMessage(data.message, 'error');
+                    navigateTo('index.html');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading admin dashboard:', error);
+                showMessage("无法加载管理员仪表盘，请重新登录。", 'error');
+                navigateTo('index.html');
+            });
+
+            // 退出登录按钮事件
+            document.getElementById('logoutButtonAdmin').addEventListener('click', () => {
+                fetch('/api/logout', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.removeItem('adminUsername');
+                        navigateTo('index.html');
+                        showMessage("已成功退出登录。");
+                        // 清理登录表单敏感字段
+                        document.getElementById('loginUsername').value = '';
+                        document.getElementById('loginPassword').value = '';
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                    showMessage("退出登录失败，请稍后再试。", 'error');
+                });
+            });
+        });
+
+        // 禁用/启用用户
+        window.toggleUserStatus = function(username) {
+            fetch(`/api/toggle-user-status?username=${username}`, {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // 刷新页面以显示更新后的状态
+                    showMessage(`用户 ${username} 已${data.isDisabled ? '禁用' : '启用'}.`);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling user status:', error);
+                showMessage("操作失败，请稍后再试。", 'error');
+            });
+        }
+
+        // 修改用户余额
+        window.promptEditBalance = function(username) {
+            // 获取当前用户的余额元素
+            const currentBalanceElement = document.querySelector(`tbody tr td:nth-child(2)`);
+            if (!currentBalanceElement) {
+                showMessage("无法找到用户余额信息。", 'error');
+                return;
+            }
+
+            const currentBalance = parseFloat(currentBalanceElement.textContent);
+            const newBalanceStr = prompt(`请输入用户的新余额:`, currentBalance.toFixed(2));
+
+            if (newBalanceStr !== null) {
+                const newBalance = parseFloat(newBalanceStr);
+                if (!isNaN(newBalance) && newBalance >= 0) {
+                    // 调用后端接口更新余额
+                    fetch('/api/edit-balance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': localStorage.getItem('adminUsername')
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            balance: newBalance
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 更新表格中的余额显示
+                            currentBalanceElement.textContent = newBalance.toFixed(2);
+                            showMessage("余额已更新。");
+                            
+                            // 刷新页面以确保数据一致性
+                            location.reload();
+                        } else {
+                            showMessage(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating balance:', error);
+                        showMessage("更新余额失败，请稍后再试。", 'error');
+                    });
+                } else {
+                    showMessage("输入的余额无效。请输入一个非负数字。", 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

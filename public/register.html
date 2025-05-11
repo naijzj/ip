@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十二长生 - 注册</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="messageBox"></div>
+
+        <div id="registerPage" class="page active">
+            <div class="form-container">
+                <h2>注册新用户</h2>
+                <input type="text" id="registerUsername" class="form-input" placeholder="用户名 (唯一)">
+                <input type="password" id="registerPassword" class="form-input" placeholder="密码">
+                <input type="password" id="registerConfirmPassword" class="form-input" placeholder="确认密码">
+                <input type="text" id="registerSecurityQuestion" class="form-input" placeholder="密保问题 (例如：我的宠物叫什么？)">
+                <input type="text" id="registerSecurityAnswer" class="form-input" placeholder="密保答案">
+                <button id="registerButton" class="btn btn-primary">注册</button>
+                <p class="mt-4 text-center">
+                    <span class="link" onclick="navigateTo('index.html')">已有账户？返回登录</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 注册按钮事件
+            document.getElementById('registerButton').addEventListener('click', () => {
+                const username = document.getElementById('registerUsername').value.trim();
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                const securityQuestion = document.getElementById('registerSecurityQuestion').value.trim();
+                const securityAnswer = document.getElementById('registerSecurityAnswer').value.trim();
+
+                if (!username || !password || !confirmPassword || !securityQuestion || !securityAnswer) {
+                    showMessage("所有字段均为必填项。", 'error');
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    showMessage("两次输入的密码不一致。", 'error');
+                    return;
+                }
+
+                fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password, securityQuestion, securityAnswer }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage("注册成功！请登录。");
+                        navigateTo('index.html');
+                        // 清空注册表单
+                        document.getElementById('registerUsername').value = '';
+                        document.getElementById('registerPassword').value = '';
+                        document.getElementById('registerConfirmPassword').value = '';
+                        document.getElementById('registerSecurityQuestion').value = '';
+                        document.getElementById('registerSecurityAnswer').value = '';
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error registering user:', error);
+                    showMessage("注册失败，请稍后再试。", 'error');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
